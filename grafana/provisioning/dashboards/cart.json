@@ -72,7 +72,7 @@
       },
       "targets": [
         {
-          "expr": "sum(rate(grpc_requests_received_total{job=\"cart-service\", service=\"hipstershop.CartService\"}[1m]))",
+          "expr": "sum(rate(http_server_request_duration_seconds_count{job=\"cart-service\", http_route=~\"/hipstershop.CartService/.*\"}[1m]))",
           "refId": "A"
         }
       ]
@@ -126,7 +126,7 @@
       },
       "targets": [
         {
-          "expr": "sum(http_requests_in_progress{job=\"cart-service\"})",
+          "expr": "sum(http_server_active_requests{job=\"cart-service\"})",
           "refId": "A"
         }
       ]
@@ -180,7 +180,7 @@
       },
       "targets": [
         {
-          "expr": "histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket{job=\"cart-service\", endpoint=~\".*/hipstershop.CartService/AddItem\"}[1m])) by (le))",
+          "expr": "histogram_quantile(0.99, sum(rate(http_server_request_duration_seconds_bucket{job=\"cart-service\", http_route=\"/hipstershop.CartService/AddItem\"}[1m])) by (le))",
           "refId": "A"
         }
       ]
@@ -234,7 +234,7 @@
       },
       "targets": [
         {
-          "expr": "histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket{job=\"cart-service\", endpoint=~\".*/hipstershop.CartService/GetCart\"}[1m])) by (le))",
+          "expr": "histogram_quantile(0.99, sum(rate(http_server_request_duration_seconds_bucket{job=\"cart-service\", http_route=\"/hipstershop.CartService/GetCart\"}[1m])) by (le))",
           "refId": "A"
         }
       ]
@@ -292,7 +292,7 @@
       },
       "targets": [
         {
-          "expr": "sum(grpc_requests_received_total{job=\"cart-service\", service=\"hipstershop.CartService\", method=\"AddItem\"})",
+          "expr": "sum(http_server_request_duration_seconds_count{job=\"cart-service\", http_route=\"/hipstershop.CartService/AddItem\"})",
           "refId": "A"
         }
       ]
@@ -338,7 +338,7 @@
       },
       "targets": [
         {
-          "expr": "sum(rate(grpc_requests_received_total{job=\"cart-service\", service=\"hipstershop.CartService\", method=\"AddItem\"}[1m]))",
+          "expr": "sum(rate(http_server_request_duration_seconds_count{job=\"cart-service\", http_route=\"/hipstershop.CartService/AddItem\"}[1m]))",
           "refId": "A"
         }
       ]
@@ -384,7 +384,7 @@
       },
       "targets": [
         {
-          "expr": "sum(grpc_requests_received_total{job=\"cart-service\", service=\"hipstershop.CartService\", method=\"GetCart\"})",
+          "expr": "sum(http_server_request_duration_seconds_count{job=\"cart-service\", http_route=\"/hipstershop.CartService/GetCart\"})",
           "refId": "A"
         }
       ]
@@ -430,7 +430,7 @@
       },
       "targets": [
         {
-          "expr": "sum(rate(grpc_requests_received_total{job=\"cart-service\", service=\"hipstershop.CartService\", method=\"GetCart\"}[1m]))",
+          "expr": "sum(rate(http_server_request_duration_seconds_count{job=\"cart-service\", http_route=\"/hipstershop.CartService/GetCart\"}[1m]))",
           "refId": "A"
         }
       ]
@@ -476,7 +476,7 @@
       },
       "targets": [
         {
-          "expr": "sum(grpc_requests_received_total{job=\"cart-service\", service=\"hipstershop.CartService\", method=\"EmptyCart\"})",
+          "expr": "sum(http_server_request_duration_seconds_count{job=\"cart-service\", http_route=\"/hipstershop.CartService/EmptyCart\"})",
           "refId": "A"
         }
       ]
@@ -522,7 +522,7 @@
       },
       "targets": [
         {
-          "expr": "sum(rate(grpc_requests_received_total{job=\"cart-service\", service=\"hipstershop.CartService\", method=\"EmptyCart\"}[1m]))",
+          "expr": "sum(rate(http_server_request_duration_seconds_count{job=\"cart-service\", http_route=\"/hipstershop.CartService/EmptyCart\"}[1m]))",
           "refId": "A"
         }
       ]
@@ -569,8 +569,8 @@
       },
       "targets": [
         {
-          "expr": "sum(rate(grpc_requests_received_total{job=\"cart-service\", service=\"hipstershop.CartService\"}[1m])) by (method)",
-          "legendFormat": "{{method}}",
+          "expr": "sum(rate(http_server_request_duration_seconds_count{job=\"cart-service\", http_route=~\"/hipstershop.CartService/.*\"}[1m])) by (http_route)",
+          "legendFormat": "{{http_route}}",
           "refId": "A"
         }
       ]
@@ -617,17 +617,17 @@
       },
       "targets": [
         {
-          "expr": "histogram_quantile(0.50, sum(rate(http_request_duration_seconds_bucket{job=\"cart-service\", endpoint=~\".*/hipstershop.CartService/.*\"}[1m])) by (le))",
+          "expr": "histogram_quantile(0.50, sum(rate(http_server_request_duration_seconds_bucket{job=\"cart-service\", http_route=~\"/hipstershop.CartService/.*\"}[1m])) by (le))",
           "legendFormat": "p50",
           "refId": "A"
         },
         {
-          "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{job=\"cart-service\", endpoint=~\".*/hipstershop.CartService/.*\"}[1m])) by (le))",
+          "expr": "histogram_quantile(0.95, sum(rate(http_server_request_duration_seconds_bucket{job=\"cart-service\", http_route=~\"/hipstershop.CartService/.*\"}[1m])) by (le))",
           "legendFormat": "p95",
           "refId": "B"
         },
         {
-          "expr": "histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket{job=\"cart-service\", endpoint=~\".*/hipstershop.CartService/.*\"}[1m])) by (le))",
+          "expr": "histogram_quantile(0.99, sum(rate(http_server_request_duration_seconds_bucket{job=\"cart-service\", http_route=~\"/hipstershop.CartService/.*\"}[1m])) by (le))",
           "legendFormat": "p99",
           "refId": "C"
         }
@@ -675,17 +675,17 @@
       },
       "targets": [
         {
-          "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{job=\"cart-service\", endpoint=~\".*/hipstershop.CartService/AddItem\"}[1m])) by (le))",
+          "expr": "histogram_quantile(0.95, sum(rate(http_server_request_duration_seconds_bucket{job=\"cart-service\", http_route=\"/hipstershop.CartService/AddItem\"}[1m])) by (le))",
           "legendFormat": "AddItem",
           "refId": "A"
         },
         {
-          "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{job=\"cart-service\", endpoint=~\".*/hipstershop.CartService/GetCart\"}[1m])) by (le))",
+          "expr": "histogram_quantile(0.95, sum(rate(http_server_request_duration_seconds_bucket{job=\"cart-service\", http_route=\"/hipstershop.CartService/GetCart\"}[1m])) by (le))",
           "legendFormat": "GetCart",
           "refId": "B"
         },
         {
-          "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{job=\"cart-service\", endpoint=~\".*/hipstershop.CartService/EmptyCart\"}[1m])) by (le))",
+          "expr": "histogram_quantile(0.95, sum(rate(http_server_request_duration_seconds_bucket{job=\"cart-service\", http_route=\"/hipstershop.CartService/EmptyCart\"}[1m])) by (le))",
           "legendFormat": "EmptyCart",
           "refId": "C"
         }
@@ -706,7 +706,7 @@
     {
       "type": "timeseries",
       "id": 201,
-      "title": "Total Memory (bytes)",
+      "title": "Working Set Memory (bytes)",
       "gridPos": {
         "h": 7,
         "w": 12,
@@ -738,8 +738,8 @@
       },
       "targets": [
         {
-          "expr": "dotnet_total_memory_bytes{job=\"cart-service\"}",
-          "legendFormat": "total memory",
+          "expr": "dotnet_process_memory_working_set_bytes{job=\"cart-service\"}",
+          "legendFormat": "working set",
           "refId": "A"
         }
       ]
@@ -782,8 +782,8 @@
       },
       "targets": [
         {
-          "expr": "rate(dotnet_collection_count_total{job=\"cart-service\"}[1m])",
-          "legendFormat": "gen{{generation}} GC/s",
+          "expr": "rate(dotnet_gc_collections_total{job=\"cart-service\"}[1m])",
+          "legendFormat": "{{gc_heap_generation}} GC/s",
           "refId": "A"
         }
       ]

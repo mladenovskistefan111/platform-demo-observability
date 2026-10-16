@@ -39,7 +39,7 @@
       "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background" },
       "targets": [
         {
-          "expr": "sum(rate(rpc_server_duration_count{job=\"currency-service\"}[1m]))",
+          "expr": "sum(rate(rpc_server_duration_seconds_count{job=\"currency-service\"}[1m]))",
           "refId": "A"
         }
       ]
@@ -69,7 +69,7 @@
       "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background" },
       "targets": [
         {
-          "expr": "100 * sum(rate(rpc_server_duration_count{job=\"currency-service\", rpc_grpc_status_code!=\"0\"}[1m])) / sum(rate(rpc_server_duration_count{job=\"currency-service\"}[1m]))",
+          "expr": "100 * sum(rate(rpc_server_duration_seconds_count{job=\"currency-service\", rpc_grpc_status_code!=\"0\"}[1m])) / sum(rate(rpc_server_duration_seconds_count{job=\"currency-service\"}[1m]))",
           "refId": "A"
         }
       ]
@@ -97,7 +97,7 @@
       "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background" },
       "targets": [
         {
-          "expr": "histogram_quantile(0.99, sum(rate(rpc_server_duration_bucket{job=\"currency-service\", rpc_method=\"Convert\"}[1m])) by (le))",
+          "expr": "histogram_quantile(0.99, sum(rate(rpc_server_duration_seconds_bucket{job=\"currency-service\", rpc_method=\"Convert\"}[1m])) by (le))",
           "refId": "A"
         }
       ]
@@ -125,7 +125,7 @@
       "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background" },
       "targets": [
         {
-          "expr": "histogram_quantile(0.99, sum(rate(rpc_server_duration_bucket{job=\"currency-service\", rpc_method=\"GetSupportedCurrencies\"}[1m])) by (le))",
+          "expr": "histogram_quantile(0.99, sum(rate(rpc_server_duration_seconds_bucket{job=\"currency-service\", rpc_method=\"GetSupportedCurrencies\"}[1m])) by (le))",
           "refId": "A"
         }
       ]
@@ -154,7 +154,7 @@
       "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background" },
       "targets": [
         {
-          "expr": "sum(rpc_server_duration_count{job=\"currency-service\", rpc_method=\"Convert\"})",
+          "expr": "sum(rpc_server_duration_seconds_count{job=\"currency-service\", rpc_method=\"Convert\"})",
           "refId": "A"
         }
       ]
@@ -176,7 +176,7 @@
       "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background" },
       "targets": [
         {
-          "expr": "sum(rate(rpc_server_duration_count{job=\"currency-service\", rpc_method=\"Convert\"}[1m]))",
+          "expr": "sum(rate(rpc_server_duration_seconds_count{job=\"currency-service\", rpc_method=\"Convert\"}[1m]))",
           "refId": "A"
         }
       ]
@@ -198,7 +198,7 @@
       "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background" },
       "targets": [
         {
-          "expr": "sum(rpc_server_duration_count{job=\"currency-service\", rpc_method=\"GetSupportedCurrencies\"})",
+          "expr": "sum(rpc_server_duration_seconds_count{job=\"currency-service\", rpc_method=\"GetSupportedCurrencies\"})",
           "refId": "A"
         }
       ]
@@ -220,7 +220,7 @@
       "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background" },
       "targets": [
         {
-          "expr": "sum(rate(rpc_server_duration_count{job=\"currency-service\", rpc_method=\"GetSupportedCurrencies\"}[1m]))",
+          "expr": "sum(rate(rpc_server_duration_seconds_count{job=\"currency-service\", rpc_method=\"GetSupportedCurrencies\"}[1m]))",
           "refId": "A"
         }
       ]
@@ -242,7 +242,7 @@
       "options": { "tooltip": { "mode": "multi" }, "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["mean", "max"] } },
       "targets": [
         {
-          "expr": "sum(rate(rpc_server_duration_count{job=\"currency-service\"}[1m])) by (rpc_method)",
+          "expr": "sum(rate(rpc_server_duration_seconds_count{job=\"currency-service\"}[1m])) by (rpc_method)",
           "legendFormat": "{{rpc_method}}",
           "refId": "A"
         }
@@ -265,17 +265,17 @@
       "options": { "tooltip": { "mode": "multi" }, "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["mean", "max"] } },
       "targets": [
         {
-          "expr": "histogram_quantile(0.50, sum(rate(rpc_server_duration_bucket{job=\"currency-service\"}[1m])) by (le))",
+          "expr": "histogram_quantile(0.50, sum(rate(rpc_server_duration_seconds_bucket{job=\"currency-service\"}[1m])) by (le))",
           "legendFormat": "p50",
           "refId": "A"
         },
         {
-          "expr": "histogram_quantile(0.95, sum(rate(rpc_server_duration_bucket{job=\"currency-service\"}[1m])) by (le))",
+          "expr": "histogram_quantile(0.95, sum(rate(rpc_server_duration_seconds_bucket{job=\"currency-service\"}[1m])) by (le))",
           "legendFormat": "p95",
           "refId": "B"
         },
         {
-          "expr": "histogram_quantile(0.99, sum(rate(rpc_server_duration_bucket{job=\"currency-service\"}[1m])) by (le))",
+          "expr": "histogram_quantile(0.99, sum(rate(rpc_server_duration_seconds_bucket{job=\"currency-service\"}[1m])) by (le))",
           "legendFormat": "p99",
           "refId": "C"
         }
@@ -298,12 +298,12 @@
       "options": { "tooltip": { "mode": "multi" }, "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["mean", "max"] } },
       "targets": [
         {
-          "expr": "histogram_quantile(0.95, sum(rate(rpc_server_duration_bucket{job=\"currency-service\", rpc_method=\"Convert\"}[1m])) by (le))",
+          "expr": "histogram_quantile(0.95, sum(rate(rpc_server_duration_seconds_bucket{job=\"currency-service\", rpc_method=\"Convert\"}[1m])) by (le))",
           "legendFormat": "Convert",
           "refId": "A"
         },
         {
-          "expr": "histogram_quantile(0.95, sum(rate(rpc_server_duration_bucket{job=\"currency-service\", rpc_method=\"GetSupportedCurrencies\"}[1m])) by (le))",
+          "expr": "histogram_quantile(0.95, sum(rate(rpc_server_duration_seconds_bucket{job=\"currency-service\", rpc_method=\"GetSupportedCurrencies\"}[1m])) by (le))",
           "legendFormat": "GetSupportedCurrencies",
           "refId": "B"
         }
@@ -326,7 +326,7 @@
       "options": { "tooltip": { "mode": "multi" }, "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["mean", "max"] } },
       "targets": [
         {
-          "expr": "sum(rate(rpc_server_duration_count{job=\"currency-service\"}[1m])) by (rpc_grpc_status_code) > 0",
+          "expr": "sum(rate(rpc_server_duration_seconds_count{job=\"currency-service\"}[1m])) by (rpc_grpc_status_code) > 0",
           "legendFormat": "code={{rpc_grpc_status_code}}",
           "refId": "A"
         }
