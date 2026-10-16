@@ -1,0 +1,427 @@
+services:
+
+  # ------------------------------------------------------------
+  # Grafana — dashboards
+  # ------------------------------------------------------------
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+      - GF_AUTH_DISABLE_LOGIN_FORM=true
+      - GF_INSTALL_PLUGINS=grafana-pyroscope-app
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - mimir
+      - loki
+      - tempo
+      - pyroscope
+    networks:
+      - observability
+
+  # ------------------------------------------------------------
+  # Grafana Alloy — collector (metrics, logs, traces, profiles)
+  # ------------------------------------------------------------
+  alloy:
+      image: grafana/alloy:latest
+      container_name: alloy
+      ports:
+        - "12345:12345"
+        - "4317:4317"
+        - "4318:4318"
+      volumes:
+        - ./alloy/config.alloy:/etc/alloy/config.alloy
+        - /var/run/docker.sock:/var/run/docker.sock
+      command: run --server.http.listen-addr=0.0.0.0:12345 /etc/alloy/config.alloy
+      depends_on:
+        - mimir
+        - loki
+        - tempo
+        - pyroscope
+      networks:
+        - observability
+
+  # ------------------------------------------------------------
+  # Grafana Mimir — metrics storage (Prometheus-compatible)
+  # ------------------------------------------------------------
+  mimir:
+    image: grafana/mimir:latest
+    container_name: mimir
+    ports:
+      - "9009:9009"
+    command:
+      - -config.file=/etc/mimir/mimir.yaml
+      - -target=all
+    volumes:
+      - ./mimir/mimir.yaml:/etc/mimir/mimir.yaml
+      - mimir_data:/data
+    networks:
+      - observability
+
+  # ------------------------------------------------------------
+  # Grafana Loki — log storage
+  # ------------------------------------------------------------
+  loki:
+    image: grafana/loki:latest
+    container_name: loki
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/loki.yaml
+    volumes:
+      - ./loki/loki.yaml:/etc/loki/loki.yaml
+      - loki_data:/loki
+    networks:
+      - observability
+
+  # ------------------------------------------------------------
+  # Grafana Tempo — trace storage
+  # ------------------------------------------------------------
+  tempo:
+    image: grafana/tempo:2.10.3
+    container_name: tempo
+    ports:
+      - "3200:3200"
+      - "4319:4317"
+    command: -config.file=/etc/tempo/tempo.yaml
+    volumes:
+      - ./tempo/tempo.yaml:/etc/tempo/tempo.yaml
+      - tempo_data:/var/tempo
+    networks:
+      - observability
+
+  # ------------------------------------------------------------
+  # Grafana Pyroscope — continuous profiling storage
+  # ------------------------------------------------------------
+  pyroscope:
+    image: grafana/pyroscope:latest
+    container_name: pyroscope
+    ports:
+      - "4040:4040"
+    volumes:
+      - ./pyroscope/pyroscope.yaml:/etc/pyroscope/pyroscope.yaml
+      - pyroscope_data:/data
+    command:
+      - -config.file=/etc/pyroscope/pyroscope.yaml
+    networks:
+      - observability
+
+  # ------------------------------------------------------------
+  # Postgres — product catalog database
+  # ------------------------------------------------------------
+  product-catalog-db:
+    image: mladenovskistefan/product-catalog-db:latest
+    container_name: product-catalog-db
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=productcatalog
+      - POSTGRES_USER=catalog
+      - POSTGRES_PASSWORD=catalog
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U catalog -d productcatalog"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - observability
+
+  # ------------------------------------------------------------
+  # Product Catalog Service
+  # ------------------------------------------------------------
+  product-catalog-service:
+    image: mladenovskistefan/product-catalog-service@sha256:0678cae7afa33ccc85edc9a79ad9bcbea27005d93963ccc5f6a5ef30a7c73bbb
+    container_name: product-catalog-service
+    ports:
+      - "3550:3550"
+      - "9090:9090"
+    environment:
+      - DATABASE_URL=postgres://catalog:catalog@product-catalog-db:5432/productcatalog
+      - ENABLE_TRACING=1
+      - COLLECTOR_SERVICE_ADDR=alloy:4317
+      - ENABLE_PROFILING=1
+      - PYROSCOPE_ADDR=http://pyroscope:4040
+      - OTEL_SERVICE_NAME=product-catalog-service
+    depends_on:
+      product-catalog-db:
+        condition: service_healthy
+      alloy:
+        condition: service_started
+      pyroscope:
+        condition: service_started
+    networks:
+      - observability
+
+  # ------------------------------------------------------------
+  # Checkout Service
+  # ------------------------------------------------------------
+  checkout-service:
+    image: mladenovskistefan/checkout-service@sha256:5c9f6d53be3cb6d0a3f94a73efed14702155974da136fe8a13fa2daa93b009ed
+    container_name: checkout-service
+    ports:
+      - "5050:5050"   # gRPC
+      - "9091:9090"   # Prometheus metrics
+    environment:
+      - ENABLE_TRACING=1
+      - COLLECTOR_SERVICE_ADDR=alloy:4317
+      - ENABLE_PROFILING=1
+      - PYROSCOPE_ADDR=http://pyroscope:4040
+      - OTEL_SERVICE_NAME=checkout-service
+      - PRODUCT_CATALOG_SERVICE_ADDR=product-catalog-service:3550
+      - CART_SERVICE_ADDR=cart-service:7070
+      - CURRENCY_SERVICE_ADDR=currency-service:7000
+      - SHIPPING_SERVICE_ADDR=shipping-service:50051
+      - PAYMENT_SERVICE_ADDR=payment-service:50051
+      - EMAIL_SERVICE_ADDR=email-service:8080
+    depends_on:
+      alloy:
+        condition: service_started
+      pyroscope:
+        condition: service_started
+      product-catalog-service:
+        condition: service_started
+      payment-service:
+        condition: service_started
+      shipping-service:
+        condition: service_started
+      currency-service:
+        condition: service_started
+      cart-service:
+        condition: service_started
+      email-service:
+        condition: service_started
+    networks:
+      - observability
+
+  # ------------------------------------------------------------
+  # Redis — cart storage
+  # ------------------------------------------------------------
+  cart-redis:
+    image: redis:7-alpine
+    container_name: cart-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - observability
+
+  # ------------------------------------------------------------
+  # Cart Service
+  # ------------------------------------------------------------
+  cart-service:
+    image: mladenovskistefan/cart-service@sha256:f9f5a222b38dc37a40aa51d1ebfb689ad1e492638301594c72982002517fa3ff
+    container_name: cart-service
+    ports:
+      - "7070:7070"   # gRPC
+      - "9092:9090"   # Prometheus metrics (host port bumped to avoid conflicts)
+    environment:
+      - REDIS_ADDR=cart-redis:6379
+      - COLLECTOR_SERVICE_ADDR=alloy:4317
+      - OTEL_SERVICE_NAME=cart-service
+    depends_on:
+      cart-redis:
+        condition: service_started
+      alloy:
+        condition: service_started
+    networks:
+      - observability
+
+  # ------------------------------------------------------------
+  # Currency Service
+  # ------------------------------------------------------------
+  currency-service:
+    image: mladenovskistefan/currency-service@sha256:794c4c6008a22d381e1939929067f560401459f3970f03340ac781dfe24d698b
+    container_name: currency-service
+    ports:
+      - "7000:7000"
+    environment:
+      - PORT=7000
+      - OTEL_SERVICE_NAME=currency-service
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://alloy:4318
+      - PYROSCOPE_ADDR=http://pyroscope:4040
+    depends_on:
+      alloy:
+        condition: service_started
+      pyroscope:
+        condition: service_started
+    networks:
+      - observability
+
+  # ------------------------------------------------------------
+  # Shipping Service
+  # ------------------------------------------------------------
+  shipping-service:
+      image: mladenovskistefan/shipping-service@sha256:1c77e485f1562f046bb94036fb53984d29c8afabd148e59de516bb55652fc37c
+      container_name: shipping-service
+      ports:
+        - "50051:50051"
+        - "9093:9090"
+      environment:
+        - ENABLE_TRACING=1
+        - COLLECTOR_SERVICE_ADDR=alloy:4317
+        - ENABLE_PROFILING=1
+        - PYROSCOPE_ADDR=http://pyroscope:4040
+        - OTEL_SERVICE_NAME=shipping-service
+      depends_on:
+        alloy:
+          condition: service_started
+        pyroscope:
+          condition: service_started
+      networks:
+        - observability
+
+  # ------------------------------------------------------------
+  # Payment Service
+  # ------------------------------------------------------------
+  payment-service:
+    image: mladenovskistefan/payment-service@sha256:696c7d82aa063dad289dabbc25133fec80cecdf9b757521828d94a3545270cb6
+    container_name: payment-service
+    ports:
+      - "50052:50051"
+      - "9094:9464"
+    environment:
+      - PORT=50051
+      - OTEL_SERVICE_NAME=payment-service
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://alloy:4318
+      - PYROSCOPE_ADDR=http://pyroscope:4040
+    depends_on:
+      alloy:
+        condition: service_started
+      pyroscope:
+        condition: service_started
+    networks:
+      - observability
+
+  # ------------------------------------------------------------
+  # Email Service
+  # ------------------------------------------------------------
+  email-service:
+      image: mladenovskistefan/email-service@sha256:cb00fbb92f1c8f61200da28a48479d2a23a5f7810e21922d4baab764cf3563d5
+      container_name: email-service
+      ports:
+        - "8080:8080"
+        - "9095:9464"
+      environment:
+        - PORT=8080
+        - OTEL_SERVICE_NAME=email-service
+        - OTEL_EXPORTER_OTLP_ENDPOINT=http://alloy:4318
+        - PYROSCOPE_ADDR=http://pyroscope:4040
+      depends_on:
+        alloy:
+          condition: service_started
+        pyroscope:
+          condition: service_started
+      networks:
+        - observability
+
+  # ------------------------------------------------------------
+  # Recommendation Service
+  # ------------------------------------------------------------
+  recommendation-service:
+    image: mladenovskistefan/recommendation-service@sha256:90ea0d4aaad13f6c8087191a7df13c75a55d461e493afe3145c3d9189df1c9f0
+    container_name: recommendation-service
+    ports:
+      - "8081:8080"
+      - "9096:9464"
+    environment:
+      - PORT=8080
+      - OTEL_SERVICE_NAME=recommendation-service
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://alloy:4318
+      - PYROSCOPE_ADDR=http://pyroscope:4040
+      - PRODUCT_CATALOG_SERVICE_ADDR=product-catalog-service:3550
+    depends_on:
+      alloy:
+        condition: service_started
+      pyroscope:
+        condition: service_started
+      product-catalog-service:
+        condition: service_started
+    networks:
+      - observability
+
+  # ------------------------------------------------------------
+  # Ad Service
+  # ------------------------------------------------------------
+  ad-service:
+    image: mladenovskistefan/ad-service@sha256:67c4c406770bf8986d6aa7b6743424e6336b39ea6fb6f0c7d7820427b6aa7057
+    container_name: ad-service
+    ports:
+      - "9555:9555"
+      - "9097:9464"
+    environment:
+      - PORT=9555
+      - OTEL_SERVICE_NAME=ad-service
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://alloy:4318
+      - PYROSCOPE_ADDR=http://pyroscope:4040
+    depends_on:
+      alloy:
+        condition: service_started
+      pyroscope:
+        condition: service_started
+    networks:
+      - observability
+
+  # ------------------------------------------------------------
+  # Frontend
+  # ------------------------------------------------------------
+  frontend:
+    image: mladenovskistefan/frontend@sha256:43e293162b9fa91aee35dd6a941f526c5926103ce349cea84f9988160e819e1b
+    container_name: frontend
+    ports:
+      - "80:8080"
+      - "9098:9464"
+    environment:
+      - PORT=8080
+      - OTEL_SERVICE_NAME=frontend
+      - COLLECTOR_SERVICE_ADDR=alloy:4317
+      - PYROSCOPE_ADDR=http://pyroscope:4040
+      - ENABLE_TRACING=1
+      - ENABLE_PROFILING=1
+      - PRODUCT_CATALOG_SERVICE_ADDR=product-catalog-service:3550
+      - CURRENCY_SERVICE_ADDR=currency-service:7000
+      - CART_SERVICE_ADDR=cart-service:7070
+      - RECOMMENDATION_SERVICE_ADDR=recommendation-service:8080
+      - CHECKOUT_SERVICE_ADDR=checkout-service:5050
+      - SHIPPING_SERVICE_ADDR=shipping-service:50051
+      - AD_SERVICE_ADDR=ad-service:9555
+    depends_on:
+      alloy:
+        condition: service_started
+      pyroscope:
+        condition: service_started
+      product-catalog-service:
+        condition: service_started
+      currency-service:
+        condition: service_started
+      cart-service:
+        condition: service_started
+      recommendation-service:
+        condition: service_started
+      checkout-service:
+        condition: service_started
+      shipping-service:
+        condition: service_started
+      ad-service:
+        condition: service_started
+    networks:
+      - observability
+
+volumes:
+  grafana_data:
+  mimir_data:
+  loki_data:
+  tempo_data:
+  pyroscope_data:
+  postgres_data:
+  redis_data:
+
+networks:
+  observability:
+    driver: bridge

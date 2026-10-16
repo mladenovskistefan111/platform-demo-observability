@@ -1,0 +1,183 @@
+// ------------------------------------------------------------
+// Grafana Alloy configuration
+// Receives traces, scrapes metrics, collects logs
+// Forwards everything to Mimir, Loki, Tempo, Pyroscope
+// ------------------------------------------------------------
+
+
+// --- OTLP receiver (traces + metrics from all services) ---
+otelcol.receiver.otlp "default" {
+  grpc {
+    endpoint = "0.0.0.0:4317"
+  }
+  http {
+    endpoint = "0.0.0.0:4318"
+  }
+  output {
+    traces  = [otelcol.exporter.otlp.tempo.input]
+    metrics = [otelcol.exporter.prometheus.default.input]
+  }
+}
+
+// --- Forward traces to Tempo ---
+otelcol.exporter.otlp "tempo" {
+  client {
+    endpoint = "tempo:4317"
+    tls {
+      insecure = true
+    }
+  }
+}
+
+// --- Bridge OTLP metrics to Prometheus remote_write ---
+otelcol.exporter.prometheus "default" {
+  forward_to = [prometheus.remote_write.mimir.receiver]
+}
+
+// --- Scrape metrics from frontend ---
+prometheus.scrape "frontend" {
+  targets = [
+    {"__address__" = "frontend:9464", "job" = "frontend"},
+  ]
+  forward_to = [prometheus.remote_write.mimir.receiver]
+  scrape_interval = "15s"
+}
+
+// --- Scrape metrics from ad-service ---
+prometheus.scrape "ad" {
+  targets = [
+    {"__address__" = "ad-service:9464", "job" = "ad-service"},
+  ]
+  forward_to = [prometheus.remote_write.mimir.receiver]
+  scrape_interval = "15s"
+}
+
+// --- Scrape metrics from recommendation-service ---
+prometheus.scrape "recommendation" {
+  targets = [
+    {"__address__" = "recommendation-service:9464", "job" = "recommendation-service"},
+  ]
+  forward_to = [prometheus.remote_write.mimir.receiver]
+  scrape_interval = "15s"
+}
+
+// --- Scrape metrics from email-service ---
+prometheus.scrape "email" {
+  targets = [
+    {"__address__" = "email-service:9464", "job" = "email-service"},
+  ]
+  forward_to = [prometheus.remote_write.mimir.receiver]
+  scrape_interval = "15s"
+}
+
+// --- Scrape metrics from payment-service ---
+prometheus.scrape "payment" {
+  targets = [
+    {"__address__" = "payment-service:9464", "job" = "payment-service"},
+  ]
+  forward_to = [prometheus.remote_write.mimir.receiver]
+  scrape_interval = "15s"
+}
+
+// --- Scrape metrics from shipping-service ---
+prometheus.scrape "shipping" {
+  targets = [
+    {"__address__" = "shipping-service:9090", "job" = "shipping-service"},
+  ]
+  forward_to = [prometheus.remote_write.mimir.receiver]
+  scrape_interval = "15s"
+}
+
+// --- Scrape metrics from cart-service ---
+prometheus.scrape "cart" {
+  targets = [
+    {"__address__" = "cart-service:9090", "job" = "cart-service"},
+  ]
+  forward_to = [prometheus.remote_write.mimir.receiver]
+  scrape_interval = "15s"
+}
+
+// --- Scrape metrics from checkout-service ---
+prometheus.scrape "checkout" {
+  targets = [
+    {"__address__" = "checkout-service:9090", "job" = "checkout-service"},
+  ]
+  forward_to = [prometheus.remote_write.mimir.receiver]
+  scrape_interval = "15s"
+}
+
+// --- Scrape metrics from product-catalog-service ---
+prometheus.scrape "product_catalog" {
+  targets = [
+    {"__address__" = "product-catalog-service:9090", "job" = "product-catalog-service"},
+  ]
+  forward_to = [prometheus.remote_write.mimir.receiver]
+  scrape_interval = "15s"
+}
+
+// --- Scrape metrics from currency-service ---
+prometheus.scrape "currency" {
+  targets = [
+    {"__address__" = "currency-service:9464", "job" = "currency-service"},
+  ]
+  forward_to = [prometheus.remote_write.mimir.receiver]
+  scrape_interval = "15s"
+}
+
+// --- Scrape metrics from postgres-exporter ---
+prometheus.scrape "postgres" {
+  targets = [
+    {"__address__" = "host.docker.internal:9187", "job" = "postgres"},
+  ]
+  forward_to = [prometheus.remote_write.mimir.receiver]
+  scrape_interval = "15s"
+}
+
+// --- Forward metrics to Mimir ---
+prometheus.remote_write "mimir" {
+  endpoint {
+    url = "http://mimir:9009/api/v1/push"
+  }
+}
+
+// --- Collect logs from Docker containers ---
+discovery.docker "containers" {
+  host = "unix:///var/run/docker.sock"
+}
+
+discovery.relabel "containers" {
+  targets = discovery.docker.containers.targets
+
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    regex         = "/(.*)"
+    target_label  = "service_name"
+  }
+
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    regex         = "/(.*)"
+    target_label  = "container"
+  }
+}
+
+loki.source.docker "containers" {
+  host       = "unix:///var/run/docker.sock"
+  targets    = discovery.relabel.containers.output
+  forward_to = [loki.write.default.receiver]
+}
+
+// --- Forward logs to Loki ---
+loki.write "default" {
+  endpoint {
+    url = "http://loki:3100/loki/api/v1/push"
+  }
+}
+
+// --- Forward profiles to Pyroscope ---
+// App pushes profiles directly via SDK — no scraping needed
+pyroscope.write "default" {
+  endpoint {
+    url = "http://pyroscope:4040"
+  }
+}
