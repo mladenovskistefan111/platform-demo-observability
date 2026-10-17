@@ -1,0 +1,143 @@
+# OTLP/gRPC overlay: every service pushes traces, metrics and logs to Alloy over OTLP/gRPC (:4317)
+# and profiles to Alloy's Pyroscope receiver (:4040). Nothing is scraped any more.
+#
+#   docker compose -f docker-compose.yaml -f docker-compose.otlp.yaml up -d
+#
+# Requires images built from the OTLP-enabled code (tag 1.1.0, see ../OTLP-MIGRATION-PLAN.md).
+# Build them locally with:  for s in <service dirs>; do docker build -t mladenovskistefan/$s:1.1.0 ../$s; done
+
+services:
+  alloy:
+    volumes: !override
+      - ./alloy/config.otlp.alloy:/etc/alloy/config.alloy
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports: !override
+      - "12345:12345"
+      - "4317:4317"   # OTLP/gRPC
+
+  product-catalog-service:
+    image: mladenovskistefan/product-catalog-service:1.1.0
+    ports: !override
+      - "3550:3550"
+    environment: !override
+      OTEL_SERVICE_NAME: "product-catalog-service"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://alloy:4317"
+      OTEL_EXPORTER_OTLP_PROTOCOL: "grpc"
+      PYROSCOPE_ADDR: "http://alloy:4040"
+      DATABASE_URL: "postgres://catalog:catalog@product-catalog-db:5432/productcatalog"
+      ENABLE_PROFILING: "1"
+      PORT: "3550"
+
+  checkout-service:
+    image: mladenovskistefan/checkout-service:1.1.0
+    ports: !override
+      - "5050:5050"
+    environment: !override
+      OTEL_SERVICE_NAME: "checkout-service"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://alloy:4317"
+      OTEL_EXPORTER_OTLP_PROTOCOL: "grpc"
+      PYROSCOPE_ADDR: "http://alloy:4040"
+      ENABLE_PROFILING: "1"
+      PRODUCT_CATALOG_SERVICE_ADDR: "product-catalog-service:3550"
+      CART_SERVICE_ADDR: "cart-service:7070"
+      CURRENCY_SERVICE_ADDR: "currency-service:7000"
+      SHIPPING_SERVICE_ADDR: "shipping-service:50051"
+      PAYMENT_SERVICE_ADDR: "payment-service:50051"
+      EMAIL_SERVICE_ADDR: "email-service:8080"
+
+  cart-service:
+    image: mladenovskistefan/cart-service:1.1.0
+    ports: !override
+      - "7070:7070"
+    environment: !override
+      OTEL_SERVICE_NAME: "cart-service"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://alloy:4317"
+      OTEL_EXPORTER_OTLP_PROTOCOL: "grpc"
+      REDIS_ADDR: "cart-redis:6379"
+
+  currency-service:
+    image: mladenovskistefan/currency-service:1.1.0
+    ports: !override
+      - "7000:7000"
+    environment: !override
+      OTEL_SERVICE_NAME: "currency-service"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://alloy:4317"
+      OTEL_EXPORTER_OTLP_PROTOCOL: "grpc"
+      PYROSCOPE_ADDR: "http://alloy:4040"
+      PORT: "7000"
+
+  shipping-service:
+    image: mladenovskistefan/shipping-service:1.1.0
+    ports: !override
+      - "50051:50051"
+    environment: !override
+      OTEL_SERVICE_NAME: "shipping-service"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://alloy:4317"
+      OTEL_EXPORTER_OTLP_PROTOCOL: "grpc"
+      PYROSCOPE_ADDR: "http://alloy:4040"
+      ENABLE_PROFILING: "1"
+
+  payment-service:
+    image: mladenovskistefan/payment-service:1.1.0
+    ports: !override
+      - "50052:50051"
+    environment: !override
+      OTEL_SERVICE_NAME: "payment-service"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://alloy:4317"
+      OTEL_EXPORTER_OTLP_PROTOCOL: "grpc"
+      PYROSCOPE_ADDR: "http://alloy:4040"
+      PORT: "50051"
+
+  email-service:
+    image: mladenovskistefan/email-service:1.1.0
+    ports: !override
+      - "8080:8080"
+    environment: !override
+      OTEL_SERVICE_NAME: "email-service"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://alloy:4317"
+      OTEL_EXPORTER_OTLP_PROTOCOL: "grpc"
+      PYROSCOPE_ADDR: "http://alloy:4040"
+      PORT: "8080"
+
+  recommendation-service:
+    image: mladenovskistefan/recommendation-service:1.1.0
+    ports: !override
+      - "8081:8080"
+    environment: !override
+      OTEL_SERVICE_NAME: "recommendation-service"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://alloy:4317"
+      OTEL_EXPORTER_OTLP_PROTOCOL: "grpc"
+      PYROSCOPE_ADDR: "http://alloy:4040"
+      PORT: "8080"
+      PRODUCT_CATALOG_SERVICE_ADDR: "product-catalog-service:3550"
+
+  ad-service:
+    image: mladenovskistefan/ad-service:1.1.0
+    ports: !override
+      - "9555:9555"
+    environment: !override
+      OTEL_SERVICE_NAME: "ad-service"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://alloy:4317"
+      OTEL_EXPORTER_OTLP_PROTOCOL: "grpc"
+      PYROSCOPE_ADDR: "http://alloy:4040"
+      PORT: "9555"
+
+  frontend:
+    image: mladenovskistefan/frontend:1.1.0
+    ports: !override
+      - "80:8080"
+    environment: !override
+      OTEL_SERVICE_NAME: "frontend"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://alloy:4317"
+      OTEL_EXPORTER_OTLP_PROTOCOL: "grpc"
+      PYROSCOPE_ADDR: "http://alloy:4040"
+      PORT: "8080"
+      ENABLE_PROFILING: "1"
+      PRODUCT_CATALOG_SERVICE_ADDR: "product-catalog-service:3550"
+      CURRENCY_SERVICE_ADDR: "currency-service:7000"
+      CART_SERVICE_ADDR: "cart-service:7070"
+      RECOMMENDATION_SERVICE_ADDR: "recommendation-service:8080"
+      CHECKOUT_SERVICE_ADDR: "checkout-service:5050"
+      SHIPPING_SERVICE_ADDR: "shipping-service:50051"
+      AD_SERVICE_ADDR: "ad-service:9555"
+
