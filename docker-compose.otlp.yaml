@@ -3,8 +3,8 @@
 #
 #   docker compose -f docker-compose.yaml -f docker-compose.otlp.yaml up -d
 #
-# Requires images built from the OTLP-enabled code (tag 1.1.0, see ../OTLP-MIGRATION-PLAN.md).
-# Build them locally with:  for s in <service dirs>; do docker build -t mladenovskistefan/$s:1.1.0 ../$s; done
+# Uses the v1.0.0 release images from Docker Hub (built, scanned and signed by each service's release workflow).
+# To try local code instead:  for s in <service dirs>; do docker build -t mladenovskistefan/$s:1.0.0 ../$s; done
 
 services:
   alloy:
@@ -16,7 +16,7 @@ services:
       - "4317:4317"   # OTLP/gRPC
 
   product-catalog-service:
-    image: mladenovskistefan/product-catalog-service:1.1.0
+    image: mladenovskistefan/product-catalog-service:1.0.0
     ports: !override
       - "3550:3550"
     environment: !override
@@ -29,7 +29,7 @@ services:
       PORT: "3550"
 
   checkout-service:
-    image: mladenovskistefan/checkout-service:1.1.0
+    image: mladenovskistefan/checkout-service:1.0.0
     ports: !override
       - "5050:5050"
     environment: !override
@@ -46,7 +46,7 @@ services:
       EMAIL_SERVICE_ADDR: "email-service:8080"
 
   cart-service:
-    image: mladenovskistefan/cart-service:1.1.0
+    image: mladenovskistefan/cart-service:1.0.0
     ports: !override
       - "7070:7070"
     environment: !override
@@ -56,7 +56,7 @@ services:
       REDIS_ADDR: "cart-redis:6379"
 
   currency-service:
-    image: mladenovskistefan/currency-service:1.1.0
+    image: mladenovskistefan/currency-service:1.0.0
     ports: !override
       - "7000:7000"
     environment: !override
@@ -67,7 +67,7 @@ services:
       PORT: "7000"
 
   shipping-service:
-    image: mladenovskistefan/shipping-service:1.1.0
+    image: mladenovskistefan/shipping-service:1.0.0
     ports: !override
       - "50051:50051"
     environment: !override
@@ -78,7 +78,7 @@ services:
       ENABLE_PROFILING: "1"
 
   payment-service:
-    image: mladenovskistefan/payment-service:1.1.0
+    image: mladenovskistefan/payment-service:1.0.0
     ports: !override
       - "50052:50051"
     environment: !override
@@ -89,7 +89,7 @@ services:
       PORT: "50051"
 
   email-service:
-    image: mladenovskistefan/email-service:1.1.0
+    image: mladenovskistefan/email-service:1.0.0
     ports: !override
       - "8080:8080"
     environment: !override
@@ -100,7 +100,7 @@ services:
       PORT: "8080"
 
   recommendation-service:
-    image: mladenovskistefan/recommendation-service:1.1.0
+    image: mladenovskistefan/recommendation-service:1.0.0
     ports: !override
       - "8081:8080"
     environment: !override
@@ -112,7 +112,7 @@ services:
       PRODUCT_CATALOG_SERVICE_ADDR: "product-catalog-service:3550"
 
   ad-service:
-    image: mladenovskistefan/ad-service:1.1.0
+    image: mladenovskistefan/ad-service:1.0.0
     ports: !override
       - "9555:9555"
     environment: !override
@@ -123,7 +123,7 @@ services:
       PORT: "9555"
 
   frontend:
-    image: mladenovskistefan/frontend:1.1.0
+    image: mladenovskistefan/frontend:1.0.0
     ports: !override
       - "80:8080"
     environment: !override
