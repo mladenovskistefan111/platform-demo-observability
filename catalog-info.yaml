@@ -6,6 +6,7 @@ metadata:
   description: "Grafana LGTM stack for local use (docker compose), the Alloy pipeline and the service dashboards."
   annotations:
     github.com/project-slug: platform-boutique/platform-demo-observability
+    backstage.io/source-location: url:https://github.com/platform-boutique/platform-demo-observability/tree/main/
     backstage.io/techdocs-ref: dir:.
     grafana/dashboard-selector: "tags @> 'observability'"
   tags: [grafana, otlp, alloy]
