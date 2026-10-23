@@ -3,7 +3,7 @@
 <div class="pd-hero" markdown>
 <span class="pd-kicker">platform · observability</span>
 
-The Grafana LGTM stack as a docker compose project, the Alloy pipeline, the provisioned datasources and the ten service dashboards. The Kubernetes version of the same stack lives in <code>platform-demo-helm/monitoring-local</code>; the dashboards are shared between the two.
+The Grafana LGTM stack as a docker compose project, the Alloy pipeline, the provisioned datasources and the ten service dashboards. The Kubernetes version of the same stack is the set of charts in <code>platform-demo-helm/monitoring</code>; it is not deployed on the EKS cluster at the moment, so this compose project is the way to run it.
 </div>
 
 <div class="pd-facts" markdown>
