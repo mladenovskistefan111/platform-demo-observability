@@ -1,0 +1,23 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: platform-demo-observability
+  title: platform-demo-observability
+  description: "Grafana LGTM stack for local use (docker compose), the Alloy pipeline and the service dashboards."
+  annotations:
+    github.com/project-slug: platform-boutique/platform-demo-observability
+    backstage.io/source-location: url:https://github.com/platform-boutique/platform-demo-observability/tree/main/
+    backstage.io/techdocs-ref: dir:.
+    grafana/dashboard-selector: "tags @> 'observability'"
+  tags: [grafana, otlp, alloy]
+  links:
+    - { url: "https://github.com/platform-boutique/platform-demo-observability", title: "Repository", icon: github }
+    - { url: "https://grafana.platform-demo.test", title: "Grafana", icon: dashboard }
+spec:
+  type: observability-stack
+  lifecycle: experimental
+  owner: group:default/maintainers
+  system: observability
+  dependsOn:
+    - resource:default/grafana
+    - resource:default/alloy

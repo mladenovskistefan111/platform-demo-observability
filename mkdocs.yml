@@ -1,0 +1,16 @@
+site_name: platform-demo-observability
+site_description: Grafana LGTM stack, Alloy pipeline and service dashboards.
+repo_url: https://github.com/platform-boutique/platform-demo-observability
+edit_uri: edit/main/docs/
+nav:
+  - Overview: index.md
+  - Running the stack: running.md
+  - Dashboards: dashboards.md
+theme:
+  name: material
+  features:
+    - navigation.sections
+    - navigation.top
+    - content.code.copy
+plugins:
+  - techdocs-core
