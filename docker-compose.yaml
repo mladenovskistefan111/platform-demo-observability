@@ -372,7 +372,7 @@ services:
   # Frontend
   # ------------------------------------------------------------
   frontend:
-    image: mladenovskistefan/frontend@sha256:43e293162b9fa91aee35dd6a941f526c5926103ce349cea84f9988160e819e1b
+    image: mladenovskistefan/frontend@sha256:fc355592e4a67d4c10898297f1b5d38422b2859fa5373341fdb2bce857d66715
     container_name: frontend
     ports:
       - "80:8080"
