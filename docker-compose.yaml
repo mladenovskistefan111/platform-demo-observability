@@ -237,7 +237,7 @@ services:
   # Currency Service
   # ------------------------------------------------------------
   currency-service:
-    image: mladenovskistefan/currency-service@sha256:794c4c6008a22d381e1939929067f560401459f3970f03340ac781dfe24d698b
+    image: mladenovskistefan/currency-service@sha256:d8c4b657e67128c15ae6d2280beef27e81e6374e94a76177a06a48cb0f2911e4
     container_name: currency-service
     ports:
       - "7000:7000"
