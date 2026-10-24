@@ -136,7 +136,7 @@ services:
   # Product Catalog Service
   # ------------------------------------------------------------
   product-catalog-service:
-    image: mladenovskistefan/product-catalog-service@sha256:0678cae7afa33ccc85edc9a79ad9bcbea27005d93963ccc5f6a5ef30a7c73bbb
+    image: mladenovskistefan/product-catalog-service@sha256:22c843ec2cc73b20b3a7226877c5b08c141cb0a65e28c02d4257a0db15acb141
     container_name: product-catalog-service
     ports:
       - "3550:3550"
